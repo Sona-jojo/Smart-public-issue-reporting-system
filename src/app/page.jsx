@@ -46,12 +46,26 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <Link
-            href="/official-login"
-            className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 sm:text-sm"
-          >
-            Official Login
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/about-us"
+              className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 transition hover:text-emerald-800 sm:px-3 sm:py-2 sm:text-sm"
+            >
+              About Us
+            </Link>
+            <Link
+              href="/contact-us"
+              className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 transition hover:text-emerald-800 sm:px-3 sm:py-2 sm:text-sm"
+            >
+              Contact Us
+            </Link>
+            <Link
+              href="/official-login"
+              className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 sm:text-sm"
+            >
+              Official Login
+            </Link>
+          </div>
         </div>
       </header>
 
