@@ -1,14 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { pick } from "@/lib/language-utils";
 
 const ROLES = [
-  { value: "admin", label: "Admin" },
-  { value: "secretary", label: "Panchayath Secretary" },
-  { value: "engineer", label: "Section Clerk / Engineer" },
+  {
+    value: "admin",
+    labelEn: "Admin",
+    labelMl: "അഡ്മിൻ",
+  },
+  {
+    value: "secretary",
+    labelEn: "Panchayath Secretary",
+    labelMl: "പഞ്ചായത്ത് സെക്രട്ടറി",
+  },
+  {
+    value: "engineer",
+    labelEn: "Section Clerk / Engineer",
+    labelMl: "സെക്ഷൻ ക്ലർക്ക് / എഞ്ചിനീയർ",
+  },
 ];
 
-export function ActorLoginForm() {
+export function ActorLoginForm({ lang = "en" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("admin");
@@ -17,8 +30,11 @@ export function ActorLoginForm() {
   const [success, setSuccess] = useState("");
 
   const activeRole = useMemo(
-    () => ROLES.find((item) => item.value === role)?.label ?? "",
-    [role],
+    () =>
+      ROLES.find((item) => item.value === role)?.[
+        lang === "ml" ? "labelMl" : "labelEn"
+      ] ?? "",
+    [role, lang],
   );
 
   const submit = async (event) => {
@@ -27,7 +43,7 @@ export function ActorLoginForm() {
     setSuccess("");
 
     if (!email || !password) {
-      setError("Email and password are required.");
+      setError(pick(lang, "Email and password are required.", "ഇമെയിലും പാസ്‌വേർഡും ആവശ്യമാണ്."));
       return;
     }
 
@@ -42,7 +58,14 @@ export function ActorLoginForm() {
       const result = await response.json();
 
       if (!response.ok || !result.success || !result.data) {
-        setError(result.message || "Unable to login with provided credentials.");
+        setError(
+          result.message ||
+            pick(
+              lang,
+              "Unable to login with provided credentials.",
+              "നൽകിയ ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് ലോഗിൻ ചെയ്യാനായില്ല.",
+            ),
+        );
         return;
       }
 
@@ -53,7 +76,7 @@ export function ActorLoginForm() {
         )}...`,
       );
     } catch {
-      setError("Server error while logging in. Please retry.");
+      setError(pick(lang, "Server error while logging in. Please retry.", "ലോഗിൻ സമയത്ത് സർവർ പിഴവ്. വീണ്ടും ശ്രമിക്കുക."));
     } finally {
       setIsLoading(false);
     }
@@ -69,8 +92,8 @@ export function ActorLoginForm() {
               key={option.value}
               className={`cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition ${
                 isActive
-                  ? "border-teal-700 bg-teal-700 text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:border-teal-600"
+                  ? "border-teal-700 bg-gradient-to-r from-teal-700 to-cyan-700 text-white shadow-md shadow-cyan-100"
+                  : "border-slate-300 bg-white text-slate-700 hover:border-teal-600 hover:bg-teal-50"
               }`}
             >
               <input
@@ -80,7 +103,7 @@ export function ActorLoginForm() {
                 checked={isActive}
                 onChange={() => setRole(option.value)}
               />
-              {option.label}
+              {pick(lang, option.labelEn, option.labelMl)}
             </label>
           );
         })}
@@ -88,15 +111,15 @@ export function ActorLoginForm() {
 
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-slate-700" htmlFor="email">
-          Email
+          {pick(lang, "Email", "ഇമെയിൽ")}
         </label>
         <input
           id="email"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="official@panchayath.gov"
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600"
+          placeholder={pick(lang, "official@panchayath.gov", "official@panchayath.gov")}
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
           autoComplete="email"
         />
       </div>
@@ -106,15 +129,15 @@ export function ActorLoginForm() {
           className="text-sm font-medium text-slate-700"
           htmlFor="password"
         >
-          Password
+          {pick(lang, "Password", "പാസ്‌വേഡ്")}
         </label>
         <input
           id="password"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="Enter password"
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600"
+          placeholder={pick(lang, "Enter password", "പാസ്‌വേഡ് നൽകുക")}
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
           autoComplete="current-password"
         />
       </div>
@@ -134,9 +157,9 @@ export function ActorLoginForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-500"
+        className="w-full rounded-xl bg-gradient-to-r from-slate-900 via-teal-800 to-cyan-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-100 transition hover:from-slate-800 hover:via-teal-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:from-slate-500 disabled:to-slate-500"
       >
-        {isLoading ? "Signing in..." : "Sign In"}
+        {isLoading ? pick(lang, "Signing in...", "ലോഗിൻ ചെയ്യുന്നു...") : pick(lang, "Sign In", "സൈൻ ഇൻ")}
       </button>
     </form>
   );

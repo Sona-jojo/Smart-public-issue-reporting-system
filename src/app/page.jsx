@@ -1,7 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { getServerLang } from "@/lib/language";
+import { pick } from "@/lib/language-utils";
 
-export default function Home() {
+export default async function Home() {
+  const lang = await getServerLang();
   const year = new Date().getFullYear();
 
   return (
@@ -42,28 +46,29 @@ export default function Home() {
                 Nammude Panchayath
               </p>
               <p className="text-xs text-slate-600 sm:text-sm">
-                Smart Public Issue Reporting System
+                {pick(lang, "Smart Public Issue Reporting System", "സ്മാർട്ട് പൊതു പ്രശ്ന റിപ്പോർട്ടിംഗ് സിസ്റ്റം")}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageSwitcher lang={lang} />
             <Link
               href="/about-us"
               className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 transition hover:text-emerald-800 sm:px-3 sm:py-2 sm:text-sm"
             >
-              About Us
+              {pick(lang, "About Us", "ഞങ്ങളേക്കുറിച്ച്")}
             </Link>
             <Link
               href="/contact-us"
               className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 transition hover:text-emerald-800 sm:px-3 sm:py-2 sm:text-sm"
             >
-              Contact Us
+              {pick(lang, "Contact Us", "ബന്ധപ്പെടുക")}
             </Link>
             <Link
               href="/official-login"
               className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 sm:text-sm"
             >
-              Official Login
+              {pick(lang, "Official Login", "ഓഫീഷ്യൽ ലോഗിൻ")}
             </Link>
           </div>
         </div>
@@ -73,14 +78,17 @@ export default function Home() {
         <section className="mx-auto w-full max-w-3xl rounded-3xl border border-white/65 bg-white/70 px-5 py-7 shadow-2xl shadow-slate-900/15 backdrop-blur-xl sm:px-8 sm:py-9">
           <div className="text-center">
             <p className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold tracking-wide uppercase text-emerald-800">
-              Citizen Service Portal
+              {pick(lang, "Citizen Service Portal", "പൗര സേവന പോർട്ടൽ")}
             </p>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Report and Track Public Issues Easily
+              {pick(lang, "Report and Track Public Issues Easily", "പൊതു പ്രശ്നങ്ങൾ എളുപ്പത്തിൽ റിപ്പോർട്ട് ചെയ്യാനും ട്രാക്ക് ചെയ്യാനും")}
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-5 sm:text-base">
-              A transparent digital platform for citizens to register local
-              public issues and monitor progress from submission to resolution.
+              {pick(
+                lang,
+                "A transparent digital platform for citizens to register local public issues and monitor progress from submission to resolution.",
+                "പ്രാദേശിക പൊതുപ്രശ്നങ്ങൾ രജിസ്റ്റർ ചെയ്യാനും സമർപ്പണത്തിൽ നിന്നും പരിഹാരത്തോളം പുരോഗതി നിരീക്ഷിക്കാനും പൗരന്മാർക്കുള്ള സുതാര്യമായ ഡിജിറ്റൽ പ്ലാറ്റ്ഫോമാണ് ഇത്.",
+              )}
             </p>
 
             <div className="mx-auto mt-8 grid w-full max-w-xl gap-3 sm:mt-10 sm:grid-cols-2">
@@ -88,29 +96,29 @@ export default function Home() {
                 href="/report-issue"
                 className="inline-flex min-h-13 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-400/55 transition hover:-translate-y-0.5 hover:from-emerald-800 hover:to-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
               >
-                Report Issue
+                {pick(lang, "Report Issue", "പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക")}
               </Link>
               <Link
                 href="/track-issue"
                 className="inline-flex min-h-13 items-center justify-center rounded-xl border border-slate-300/90 bg-white/95 px-6 py-3 text-base font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-600"
               >
-                Track Issue
+                {pick(lang, "Track Issue", "പ്രശ്നം ട്രാക്ക് ചെയ്യുക")}
               </Link>
             </div>
 
             <div className="mx-auto mt-7 max-w-3xl rounded-2xl border border-white/75 bg-gradient-to-r from-white/85 via-emerald-50/85 to-cyan-50/85 p-4 text-left shadow-md shadow-emerald-100/50">
               <h2 className="text-lg font-semibold text-slate-900">
-                Why use this platform?
+                {pick(lang, "Why use this platform?", "ഈ പ്ലാറ്റ്ഫോം ഉപയോഗിക്കേണ്ടത് എന്തിന്?")}
               </h2>
               <ul className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-3">
                 <li className="rounded-lg border border-emerald-100 bg-white/90 px-3 py-2">
-                  Quick issue reporting with complete details.
+                  {pick(lang, "Quick issue reporting with complete details.", "പൂർണ്ണ വിവരങ്ങളോടെ വേഗത്തിലുള്ള റിപ്പോർട്ടിംഗ്.")}
                 </li>
                 <li className="rounded-lg border border-emerald-100 bg-white/90 px-3 py-2">
-                  Easy tracking with clear status updates.
+                  {pick(lang, "Easy tracking with clear status updates.", "സ്പഷ്ടമായ സ്റ്റാറ്റസ് അപ്ഡേറ്റുകളോടെ എളുപ്പത്തിൽ ട്രാക്കിംഗ്.")}
                 </li>
                 <li className="rounded-lg border border-emerald-100 bg-white/90 px-3 py-2">
-                  Transparent and accountable resolution process.
+                  {pick(lang, "Transparent and accountable resolution process.", "സുതാര്യവും ഉത്തരവാദിത്തമുള്ള പരിഹാര പ്രക്രിയ.")}
                 </li>
               </ul>
             </div>
@@ -120,7 +128,11 @@ export default function Home() {
 
       <footer className="relative z-10 px-4 pb-6 pt-2 text-center text-xs text-white/90 sm:px-6">
         <p>
-          &copy; {year} Nammude Panchayath. All rights reserved.
+          {pick(
+            lang,
+            `© ${year} Nammude Panchayath. All rights reserved.`,
+            `© ${year} നമ്മുടെ പഞ്ചായത്ത്. എല്ലാ അവകാശങ്ങളും സംരക്ഷിതമാണ്.`,
+          )}
         </p>
       </footer>
     </div>

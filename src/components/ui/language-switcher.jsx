@@ -1,0 +1,38 @@
+"use client";
+
+import { LANG_COOKIE } from "@/lib/language-utils";
+
+export function LanguageSwitcher({ lang = "en" }) {
+  const setLang = (nextLang) => {
+    if (nextLang === lang) return;
+    document.cookie = `${LANG_COOKIE}=${nextLang}; path=/; max-age=31536000; samesite=lax`;
+    window.location.reload();
+  };
+
+  return (
+    <div className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white p-1 text-xs">
+      <button
+        type="button"
+        onClick={() => setLang("en")}
+        className={`rounded-md px-2 py-1 font-semibold transition ${
+          lang === "en"
+            ? "bg-blue-700 text-white"
+            : "text-slate-700 hover:bg-slate-100"
+        }`}
+      >
+        EN
+      </button>
+      <button
+        type="button"
+        onClick={() => setLang("ml")}
+        className={`rounded-md px-2 py-1 font-semibold transition ${
+          lang === "ml"
+            ? "bg-emerald-700 text-white"
+            : "text-slate-700 hover:bg-slate-100"
+        }`}
+      >
+        മലയാളം
+      </button>
+    </div>
+  );
+}
