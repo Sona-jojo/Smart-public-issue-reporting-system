@@ -75,7 +75,7 @@ function toDisplayRecord(raw, id) {
   return {
     trackId: raw.track_id || id,
     category: raw.category || raw.department_name || "General",
-    subcategory: raw.subcategory || raw.issue || "Other",
+    subcategory: raw.sub_issue || raw.subcategory || raw.issue || "Other",
     description: raw.description || "No description provided.",
     priority: raw.priority || "High",
     location: raw.location || "-",

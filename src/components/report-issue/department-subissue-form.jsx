@@ -170,6 +170,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
     const fallbackRecord = {
       track_id: trackId,
       category: department.name,
+      sub_issue: issueLabel,
       subcategory: issueLabel,
       description,
       priority,
@@ -196,13 +197,10 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
     let error = null;
     try {
       const payload = {
-        // Keep both variants so whichever exists in DB is filled.
         trackid: trackId,
         track_id: trackId,
         category: department.name,
         sub_issue: issueLabel,
-        subcategory: issueLabel,
-        issue: issueLabel,
         description,
         priority,
         district: district || null,
