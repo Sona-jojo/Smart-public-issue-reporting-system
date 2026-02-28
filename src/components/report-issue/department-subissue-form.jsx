@@ -106,7 +106,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
     event.preventDefault();
     setSubmitError("");
 
-    if (!selectedIssueSlug || !description || !district || !panchayath || !priority) {
+    if (!selectedIssueSlug || !description || !priority) {
       setSubmitError(
         pick(
           lang,
@@ -123,6 +123,25 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
           lang,
           "Provide at least Email or Mobile Number, or choose anonymous submission.",
           "കുറഞ്ഞത് ഇമെയിൽ അല്ലെങ്കിൽ മൊബൈൽ നമ്പർ നൽകുക, അല്ലെങ്കിൽ അനാമധേയ സമർപ്പണം തിരഞ്ഞെടുക്കുക.",
+        ),
+      );
+      return;
+    }
+
+    const autoLocationText =
+      location?.latitude && location?.longitude
+        ? `${location.latitude}, ${location.longitude}`
+        : "";
+    const manualLocationText =
+      district && panchayath ? `${district}, ${panchayath}` : "";
+    const finalLocation = autoLocationText || manualLocationText;
+
+    if (!finalLocation) {
+      setSubmitError(
+        pick(
+          lang,
+          "Provide location using Auto-detect GPS or manual District + Panchayath.",
+          "à´¸àµà´¥à´²à´‚ à´¨àµ½à´•àµà´•: GPS à´¸àµà´µà´¯à´‚ à´•à´£àµà´Ÿàµ†à´¤àµà´¤àµà´• à´…à´²àµà´²àµ†à´™àµà´•à´¿àµ½ à´œà´¿à´²àµà´² + à´ªà´žàµà´šà´¾à´¯à´¤àµà´¤àµ à´¤à´¿à´°à´žàµà´žàµ†à´Ÿàµà´•àµà´•àµà´•.",
         ),
       );
       return;
@@ -147,12 +166,6 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
     const trackId = buildTrackId();
     setIsSubmitting(true);
 
-    const locationText = `${district}, ${panchayath}${
-      location?.latitude && location?.longitude
-        ? ` (${location.latitude}, ${location.longitude})`
-        : ""
-    }`;
-
     const nowIso = new Date().toISOString();
     const fallbackRecord = {
       track_id: trackId,
@@ -160,7 +173,9 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
       subcategory: issueLabel,
       description,
       priority,
-      location: locationText,
+      district: district || null,
+      panchayath: panchayath || null,
+      location: finalLocation,
       reported_at: nowIso,
       submitted_by: isAnonymous ? "Anonymous" : "Citizen",
       reported_email: isAnonymous ? null : email || null,
@@ -180,16 +195,19 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
 
     let error = null;
     try {
-      const richPayload = {
+      const payload = {
+        // Keep both variants so whichever exists in DB is filled.
+        trackid: trackId,
         track_id: trackId,
         category: department.name,
+        sub_issue: issueLabel,
         subcategory: issueLabel,
         issue: issueLabel,
         description,
         priority,
-        location: locationText,
-        district,
-        panchayath,
+        district: district || null,
+        panchayath: panchayath || null,
+        location: finalLocation,
         phone: isAnonymous ? null : phone || null,
         email: isAnonymous ? null : email || null,
         reported_phone: isAnonymous ? null : phone || null,
@@ -202,19 +220,25 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         updated_at: nowIso,
       };
 
-      const basePayload = {
-        category: department.name,
-        issue: issueLabel,
-        phone: isAnonymous ? null : phone || null,
-        email: isAnonymous ? null : email || null,
-        location: locationText,
-      };
+      // Retry by removing unknown columns one by one from Supabase error message.
+      let workingPayload = { ...payload };
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        const result = await supabase.from(issuesTable).insert(workingPayload);
+        if (!result.error) {
+          error = null;
+          break;
+        }
 
-      let result = await supabase.from(issuesTable).insert(richPayload);
-      if (result.error) {
-        result = await supabase.from(issuesTable).insert(basePayload);
+        const message = String(result.error.message || "");
+        const missingColumn = message.match(/Could not find the '([^']+)' column/i)?.[1];
+        if (missingColumn && missingColumn in workingPayload) {
+          delete workingPayload[missingColumn];
+          continue;
+        }
+
+        error = result.error;
+        break;
       }
-      error = result.error;
     } catch (caught) {
       error = caught instanceof Error ? caught : new Error(String(caught));
     }
@@ -391,7 +415,6 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
                 setPanchayath("");
               }}
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-600"
-              required
             >
               <option value="">{pick(lang, "Select district", "ജില്ല തിരഞ്ഞെടുക്കുക")}</option>
               {Object.keys(DISTRICT_OPTIONS).map((districtName) => (
@@ -410,7 +433,6 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
               value={panchayath}
               onChange={(event) => setPanchayath(event.target.value)}
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-600"
-              required
             >
               <option value="">{pick(lang, "Select panchayath", "പഞ്ചായത്ത് തിരഞ്ഞെടുക്കുക")}</option>
               {panchayathOptions.map((name) => (
