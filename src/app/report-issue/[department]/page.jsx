@@ -17,11 +17,11 @@ export default async function ReportIssueSubIssuePage({ params }) {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_10%_0%,#dbeafe_0%,transparent_32%),radial-gradient(circle_at_90%_0%,#bbf7d0_0%,transparent_28%),linear-gradient(180deg,#f8fbff_0%,#f0fdf4_100%)] px-4 py-8 sm:px-6 sm:py-12">
-      <section className="mx-auto w-full max-w-5xl rounded-3xl border border-blue-100 bg-white/90 p-5 shadow-xl shadow-blue-100/60 backdrop-blur-sm sm:p-8">
+    <main className="ui-bg min-h-screen px-4 py-8 sm:px-6 sm:py-12">
+      <section className="ui-glass mx-auto w-full max-w-5xl rounded-3xl p-5 sm:p-8">
         <div className="mb-8">
           <div className="flex items-center justify-between gap-3">
-            <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold tracking-wide text-blue-800 uppercase">
+            <p className="ui-surface inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-blue-900 uppercase">
               {pick(lang, "Step 2 of 3", "3 ലെ ഘട്ടം 2")}
             </p>
             <LanguageSwitcher lang={lang} />
@@ -42,13 +42,13 @@ export default async function ReportIssueSubIssuePage({ params }) {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/report-issue"
-            className="inline-flex rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
+            className="ui-glass inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
           >
             {pick(lang, "Back to Departments", "വിഭാഗങ്ങളിലേക്കു മടങ്ങുക")}
           </Link>
           <Link
             href="/"
-            className="inline-flex rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
+            className="ui-glass inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
           >
             {pick(lang, "Back to Home", "ഹോം പേജിലേക്കു മടങ്ങുക")}
           </Link>

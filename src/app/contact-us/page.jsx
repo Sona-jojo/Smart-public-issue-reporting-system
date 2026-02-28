@@ -6,10 +6,10 @@ import { pick } from "@/lib/language-utils";
 export default async function ContactUsPage() {
   const lang = await getServerLang();
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_8%_0%,#dbeafe_0%,transparent_32%),radial-gradient(circle_at_92%_0%,#bbf7d0_0%,transparent_30%),linear-gradient(180deg,#f8fbff_0%,#f0fdf4_100%)] px-4 py-10 sm:px-6 sm:py-14">
-      <section className="mx-auto w-full max-w-5xl rounded-3xl border border-blue-100 bg-white/90 p-6 shadow-xl shadow-blue-100/60 backdrop-blur-sm sm:p-9">
+    <main className="ui-bg min-h-screen px-4 py-10 sm:px-6 sm:py-14">
+      <section className="ui-glass mx-auto w-full max-w-5xl rounded-3xl p-6 sm:p-9">
         <div className="flex items-center justify-between gap-3">
-          <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold tracking-wide text-emerald-800 uppercase">
+          <p className="ui-surface inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-emerald-900 uppercase">
             {pick(lang, "Citizen Help Desk", "പൗര സഹായ ഡെസ്ക്")}
           </p>
           <LanguageSwitcher lang={lang} />
@@ -26,7 +26,7 @@ export default async function ContactUsPage() {
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <article className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5">
+          <article className="ui-surface rounded-2xl p-5">
             <h2 className="text-base font-semibold text-slate-900">
               {pick(lang, "Citizen Support Desk", "പൗര സഹായ ഡെസ്ക്")}
             </h2>
@@ -39,7 +39,7 @@ export default async function ContactUsPage() {
             <p className="mt-1 text-sm text-slate-700">Phone: +91 00000 00000</p>
           </article>
 
-          <article className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5">
+          <article className="ui-surface rounded-2xl p-5">
             <h2 className="text-base font-semibold text-slate-900">{pick(lang, "Office Hours", "ഓഫീസ് സമയം")}</h2>
             <p className="mt-3 text-sm text-slate-700">
               {pick(lang, "Monday to Friday: 10:00 AM to 5:00 PM", "തിങ്കൾ മുതൽ വെള്ളി വരെ: രാവിലെ 10:00 മുതൽ വൈകിട്ട് 5:00 വരെ")}
@@ -49,7 +49,7 @@ export default async function ContactUsPage() {
           </article>
         </div>
 
-        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="ui-surface mt-6 rounded-xl px-4 py-3 text-sm text-amber-800">
           {pick(
             lang,
             "For emergencies related to public safety, contact local emergency authorities directly.",
@@ -60,13 +60,13 @@ export default async function ContactUsPage() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/"
-            className="inline-flex rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
+            className="ui-glass inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
           >
             {pick(lang, "Back to Home", "ഹോം പേജിലേക്കു മടങ്ങുക")}
           </Link>
           <Link
             href="/report-issue"
-            className="inline-flex rounded-lg bg-gradient-to-r from-blue-700 to-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-800 hover:to-emerald-800"
+            className="ui-button-primary inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
           >
             {pick(lang, "Report an Issue", "പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക")}
           </Link>

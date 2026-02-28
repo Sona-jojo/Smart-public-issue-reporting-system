@@ -9,11 +9,11 @@ export default async function ReportIssueDepartmentPage() {
   const lang = await getServerLang();
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_10%_0%,#dbeafe_0%,transparent_32%),radial-gradient(circle_at_90%_0%,#bbf7d0_0%,transparent_28%),linear-gradient(180deg,#f8fbff_0%,#f0fdf4_100%)] px-4 py-8 sm:px-6 sm:py-12">
-      <section className="mx-auto w-full max-w-6xl rounded-3xl border border-blue-100 bg-white/90 p-5 shadow-xl shadow-blue-100/60 backdrop-blur-sm sm:p-8">
+    <main className="ui-bg min-h-screen px-4 py-8 sm:px-6 sm:py-12">
+      <section className="ui-glass mx-auto w-full max-w-6xl rounded-3xl p-5 sm:p-8">
         <div className="mb-8">
           <div className="flex items-center justify-between gap-3">
-            <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold tracking-wide text-blue-800 uppercase">
+            <p className="ui-surface inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-blue-900 uppercase">
               {pick(lang, "Step 1 of 3", "3 ലെ ഘട്ടം 1")}
             </p>
             <LanguageSwitcher lang={lang} />
@@ -31,7 +31,7 @@ export default async function ReportIssueDepartmentPage() {
             <Link
               key={department.slug}
               href={`/report-issue/${department.slug}`}
-              className="group rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/70 to-emerald-50/70 p-4 shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-200/50"
+              className="ui-surface group rounded-2xl p-4 transition hover:-translate-y-1"
             >
               <div className="mb-3">
                 <DepartmentIcon code={department.icon} />
@@ -52,7 +52,7 @@ export default async function ReportIssueDepartmentPage() {
 
         <Link
           href="/"
-          className="mt-8 inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          className="ui-glass mt-8 inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
         >
           {pick(lang, "Back to Home", "ഹോം പേജിലേക്കു മടങ്ങുക")}
         </Link>

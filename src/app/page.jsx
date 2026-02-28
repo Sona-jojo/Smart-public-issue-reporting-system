@@ -9,7 +9,7 @@ export default async function Home() {
   const year = new Date().getFullYear();
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-slate-100">
+    <div className="ui-bg relative flex min-h-screen flex-col overflow-hidden">
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -32,7 +32,7 @@ export default async function Home() {
       />
 
       <header className="relative z-10 px-4 py-4 sm:px-6">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 rounded-2xl border border-white/70 bg-white/68 px-4 py-3 shadow-lg shadow-slate-900/10 backdrop-blur-md sm:px-5">
+        <div className="ui-glass mx-auto flex w-full max-w-6xl items-center justify-between gap-4 rounded-2xl px-4 py-3 sm:px-5">
           <div className="flex items-center gap-3">
             <Image
               src="/coconut-tree.svg"
@@ -75,7 +75,7 @@ export default async function Home() {
       </header>
 
       <main className="relative z-10 flex flex-1 items-center px-4 py-10 sm:px-6 sm:py-14">
-        <section className="mx-auto w-full max-w-3xl rounded-3xl border border-white/65 bg-white/70 px-5 py-7 shadow-2xl shadow-slate-900/15 backdrop-blur-xl sm:px-8 sm:py-9">
+        <section className="ui-glass mx-auto w-full max-w-3xl rounded-3xl px-5 py-7 sm:px-8 sm:py-9">
           <div className="text-center">
             <p className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold tracking-wide uppercase text-emerald-800">
               {pick(lang, "Citizen Service Portal", "പൗര സേവന പോർട്ടൽ")}
@@ -94,7 +94,7 @@ export default async function Home() {
             <div className="mx-auto mt-8 grid w-full max-w-xl gap-3 sm:mt-10 sm:grid-cols-2">
               <Link
                 href="/report-issue"
-                className="inline-flex min-h-13 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-400/55 transition hover:-translate-y-0.5 hover:from-emerald-800 hover:to-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                className="ui-button-primary ui-float inline-flex min-h-13 items-center justify-center rounded-xl px-6 py-3 text-base font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
               >
                 {pick(lang, "Report Issue", "പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക")}
               </Link>
@@ -106,7 +106,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            <div className="mx-auto mt-7 max-w-3xl rounded-2xl border border-white/75 bg-gradient-to-r from-white/85 via-emerald-50/85 to-cyan-50/85 p-4 text-left shadow-md shadow-emerald-100/50">
+            <div className="ui-surface mx-auto mt-7 max-w-3xl rounded-2xl p-4 text-left">
               <h2 className="text-lg font-semibold text-slate-900">
                 {pick(lang, "Why use this platform?", "ഈ പ്ലാറ്റ്ഫോം ഉപയോഗിക്കേണ്ടത് എന്തിന്?")}
               </h2>

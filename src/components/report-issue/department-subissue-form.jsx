@@ -153,15 +153,67 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         : ""
     }`;
 
+    const nowIso = new Date().toISOString();
+    const fallbackRecord = {
+      track_id: trackId,
+      category: department.name,
+      subcategory: issueLabel,
+      description,
+      priority,
+      location: locationText,
+      reported_at: nowIso,
+      submitted_by: isAnonymous ? "Anonymous" : "Citizen",
+      reported_email: isAnonymous ? null : email || null,
+      reported_phone: isAnonymous ? null : phone || null,
+      is_anonymous: isAnonymous,
+      status: "Pending",
+    };
+
+    try {
+      const raw = localStorage.getItem("spirs_reports");
+      const parsed = raw ? JSON.parse(raw) : [];
+      const next = [fallbackRecord, ...parsed].slice(0, 100);
+      localStorage.setItem("spirs_reports", JSON.stringify(next));
+    } catch {
+      // Ignore local storage errors.
+    }
+
     let error = null;
     try {
-      const result = await supabase.from(issuesTable).insert({
+      const richPayload = {
+        track_id: trackId,
+        category: department.name,
+        subcategory: issueLabel,
+        issue: issueLabel,
+        description,
+        priority,
+        location: locationText,
+        district,
+        panchayath,
+        phone: isAnonymous ? null : phone || null,
+        email: isAnonymous ? null : email || null,
+        reported_phone: isAnonymous ? null : phone || null,
+        reported_email: isAnonymous ? null : email || null,
+        is_anonymous: isAnonymous,
+        status: "Pending",
+        escalation_count: 0,
+        resolution_deadline: null,
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+
+      const basePayload = {
         category: department.name,
         issue: issueLabel,
         phone: isAnonymous ? null : phone || null,
         email: isAnonymous ? null : email || null,
         location: locationText,
-      });
+      };
+
+      let result = await supabase.from(issuesTable).insert(richPayload);
+      if (result.error) {
+        result = await supabase.from(issuesTable).insert(basePayload);
+      }
       error = result.error;
     } catch (caught) {
       error = caught instanceof Error ? caught : new Error(String(caught));
@@ -200,7 +252,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/60 to-emerald-50/60 p-4 shadow-sm sm:p-5">
+      <div className="ui-surface rounded-2xl p-4 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-800">
           {pick(lang, "Select Sub-Issue", "ഉപപ്രശ്നം തിരഞ്ഞെടുക്കുക")}
         </h2>
@@ -242,7 +294,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="ui-glass rounded-2xl p-4 sm:p-5">
         <label htmlFor="description" className="text-sm font-semibold text-slate-800">
           {pick(lang, "Issue Description", "പ്രശ്ന വിവരണം")}
         </label>
@@ -269,7 +321,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         />
       </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="ui-glass rounded-2xl p-4 sm:p-5">
         <label className="text-sm font-semibold text-slate-800">
           {pick(lang, "Upload Images (up to 3)", "ചിത്രങ്ങൾ അപ്‌ലോഡ് ചെയ്യുക (പരമാവധി 3)")}
         </label>
@@ -297,14 +349,14 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         ) : null}
       </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="ui-glass rounded-2xl p-4 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-800">
           {pick(lang, "Location", "സ്ഥലം")}
         </h2>
         <button
           type="button"
           onClick={detectLocation}
-          className="mt-2 rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+          className="ui-button-primary mt-2 rounded-lg px-3 py-2 text-sm font-semibold text-white transition"
         >
           {isLocating
             ? pick(lang, "Detecting...", "കണ്ടെത്തുന്നു...")
@@ -371,7 +423,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="ui-glass rounded-2xl p-4 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-800">
           {pick(lang, "Priority", "പ്രാധാന്യം")}
         </h2>
@@ -418,7 +470,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="ui-glass rounded-2xl p-4 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-800">
           {pick(lang, "Citizen Info (Optional)", "പൗര വിവരങ്ങൾ (ഐച്ഛികം)")}
         </h2>
@@ -459,7 +511,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-700 via-cyan-600 to-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-200 transition hover:from-blue-800 hover:via-cyan-700 hover:to-emerald-700 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        className="ui-button-primary inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
         {isSubmitting
           ? pick(lang, "Submitting...", "സമർപ്പിക്കുന്നു...")

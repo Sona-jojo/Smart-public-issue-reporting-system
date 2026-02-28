@@ -6,10 +6,10 @@ import { pick } from "@/lib/language-utils";
 export default async function AboutUsPage() {
   const lang = await getServerLang();
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_8%_0%,#dbeafe_0%,transparent_32%),radial-gradient(circle_at_92%_0%,#bbf7d0_0%,transparent_30%),linear-gradient(180deg,#f8fbff_0%,#f0fdf4_100%)] px-4 py-10 sm:px-6 sm:py-14">
-      <section className="mx-auto w-full max-w-5xl rounded-3xl border border-blue-100 bg-white/90 p-6 shadow-xl shadow-blue-100/60 backdrop-blur-sm sm:p-9">
+    <main className="ui-bg min-h-screen px-4 py-10 sm:px-6 sm:py-14">
+      <section className="ui-glass mx-auto w-full max-w-5xl rounded-3xl p-6 sm:p-9">
         <div className="flex items-center justify-between gap-3">
-          <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold tracking-wide text-blue-800 uppercase">
+          <p className="ui-surface inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-blue-900 uppercase">
             {pick(lang, "Public Digital Service", "പൊതു ഡിജിറ്റൽ സേവനം")}
           </p>
           <LanguageSwitcher lang={lang} />
@@ -26,19 +26,19 @@ export default async function AboutUsPage() {
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+          <article className="ui-surface rounded-2xl p-4">
             <h2 className="text-sm font-semibold text-slate-900">{pick(lang, "Transparency", "സുതാര്യത")}</h2>
             <p className="mt-2 text-sm text-slate-600">
               {pick(lang, "Track issue status from submission to closure.", "സമർപ്പണത്തിൽ നിന്ന് പരിഹാരത്തോളം സ്റ്റാറ്റസ് ട്രാക്ക് ചെയ്യാം.")}
             </p>
           </article>
-          <article className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+          <article className="ui-surface rounded-2xl p-4">
             <h2 className="text-sm font-semibold text-slate-900">{pick(lang, "Accessibility", "ലഭ്യത")}</h2>
             <p className="mt-2 text-sm text-slate-600">
               {pick(lang, "Citizen-friendly service with simple forms and clear navigation.", "ലളിതമായ ഫോമുകളും വ്യക്തമായ നാവിഗേഷനും ഉള്ള പൗരസൗഹൃദ സേവനം.")}
             </p>
           </article>
-          <article className="rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white p-4">
+          <article className="ui-surface rounded-2xl p-4">
             <h2 className="text-sm font-semibold text-slate-900">{pick(lang, "Accountability", "ഉത്തരവാദിത്തം")}</h2>
             <p className="mt-2 text-sm text-slate-600">
               {pick(lang, "Department-based workflows improve official follow-up and closure.", "ഡിപ്പാർട്ട്മെന്റ് അധിഷ്ഠിത പ്രവാഹം ഔദ്യോഗിക ഫോളോ-അപ്പും പരിഹാരവും മെച്ചപ്പെടുത്തുന്നു.")}
@@ -46,7 +46,7 @@ export default async function AboutUsPage() {
           </article>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div className="ui-surface mt-8 rounded-2xl p-5">
           <h2 className="text-lg font-semibold text-slate-900">{pick(lang, "How It Works", "ഇത് എങ്ങനെ പ്രവർത്തിക്കുന്നു")}</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-3">
@@ -78,7 +78,7 @@ export default async function AboutUsPage() {
 
         <Link
           href="/"
-          className="mt-8 inline-flex rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
+          className="ui-glass mt-8 inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50"
         >
           {pick(lang, "Back to Home", "ഹോം പേജിലേക്കു മടങ്ങുക")}
         </Link>

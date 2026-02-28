@@ -9,9 +9,9 @@ export async function OfficialLoginPage() {
   const lang = await getServerLang();
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,#fde68a_0%,transparent_35%),radial-gradient(circle_at_90%_0%,#bfdbfe_0%,transparent_30%),radial-gradient(circle_at_50%_100%,#a7f3d0_0%,transparent_35%),linear-gradient(140deg,#f8fafc_0%,#ecfdf5_45%,#f0f9ff_100%)] px-4 py-8 sm:px-6 sm:py-12">
+    <div className="ui-bg min-h-screen px-4 py-8 sm:px-6 sm:py-12">
       <main className="mx-auto w-full max-w-5xl">
-        <header className="mb-6 rounded-2xl border border-white/70 bg-white/85 p-4 shadow-lg shadow-emerald-100/70 backdrop-blur-md sm:mb-8 sm:p-5">
+        <header className="ui-glass mb-6 rounded-2xl p-4 sm:mb-8 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <BackArrowButton lang={lang} />
             <LanguageSwitcher lang={lang} />
@@ -35,7 +35,7 @@ export async function OfficialLoginPage() {
           </div>
         </header>
 
-        <section className="mx-auto w-full max-w-xl rounded-3xl border border-white/80 bg-white/92 p-6 shadow-2xl shadow-emerald-100/70 backdrop-blur-sm sm:p-8">
+        <section className="ui-glass mx-auto w-full max-w-xl rounded-3xl p-6 sm:p-8">
           <h1 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {pick(lang, "Smart Public Issue Reporting System", "സ്മാർട്ട് പൊതു പ്രശ്ന റിപ്പോർട്ടിംഗ് സിസ്റ്റം")}
           </h1>
@@ -47,7 +47,7 @@ export async function OfficialLoginPage() {
             <ActorLoginForm lang={lang} />
           </div>
 
-          <p className="mt-6 rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50/80 to-cyan-50/80 px-4 py-3 text-sm leading-6 text-slate-700">
+          <p className="ui-surface mt-6 rounded-xl px-4 py-3 text-sm leading-6 text-slate-700">
             {pick(
               lang,
               "Secure login access for internal users only. Citizens will use a separate complaint portal with Track ID based status view.",

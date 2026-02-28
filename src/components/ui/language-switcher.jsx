@@ -10,13 +10,13 @@ export function LanguageSwitcher({ lang = "en" }) {
   };
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white p-1 text-xs">
+    <div className="ui-glass inline-flex items-center gap-1 rounded-xl p-1 text-xs shadow-sm">
       <button
         type="button"
         onClick={() => setLang("en")}
         className={`rounded-md px-2 py-1 font-semibold transition ${
           lang === "en"
-            ? "bg-blue-700 text-white"
+            ? "ui-button-primary text-white"
             : "text-slate-700 hover:bg-slate-100"
         }`}
       >
@@ -27,7 +27,7 @@ export function LanguageSwitcher({ lang = "en" }) {
         onClick={() => setLang("ml")}
         className={`rounded-md px-2 py-1 font-semibold transition ${
           lang === "ml"
-            ? "bg-emerald-700 text-white"
+            ? "ui-button-primary text-white"
             : "text-slate-700 hover:bg-slate-100"
         }`}
       >

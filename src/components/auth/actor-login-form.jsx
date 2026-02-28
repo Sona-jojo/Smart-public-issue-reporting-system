@@ -92,7 +92,7 @@ export function ActorLoginForm({ lang = "en" }) {
               key={option.value}
               className={`cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition ${
                 isActive
-                  ? "border-teal-700 bg-gradient-to-r from-teal-700 to-cyan-700 text-white shadow-md shadow-cyan-100"
+                  ? "ui-button-primary border-transparent text-white"
                   : "border-slate-300 bg-white text-slate-700 hover:border-teal-600 hover:bg-teal-50"
               }`}
             >
@@ -143,13 +143,13 @@ export function ActorLoginForm({ lang = "en" }) {
       </div>
 
       {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="ui-surface rounded-lg px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
       {success ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <p className="ui-surface rounded-lg px-3 py-2 text-sm text-emerald-700">
           {success}
         </p>
       ) : null}
@@ -157,7 +157,7 @@ export function ActorLoginForm({ lang = "en" }) {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-xl bg-gradient-to-r from-slate-900 via-teal-800 to-cyan-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-100 transition hover:from-slate-800 hover:via-teal-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:from-slate-500 disabled:to-slate-500"
+        className="ui-button-primary w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:from-slate-500 disabled:to-slate-500"
       >
         {isLoading ? pick(lang, "Signing in...", "ലോഗിൻ ചെയ്യുന്നു...") : pick(lang, "Sign In", "സൈൻ ഇൻ")}
       </button>

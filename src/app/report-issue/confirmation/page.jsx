@@ -9,10 +9,10 @@ export default async function ReportIssueConfirmationPage({ searchParams }) {
   const trackId = query.trackId ?? "N/A";
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_10%_0%,#dbeafe_0%,transparent_32%),radial-gradient(circle_at_90%_0%,#bbf7d0_0%,transparent_30%),linear-gradient(180deg,#f8fbff_0%,#f0fdf4_100%)] px-4 py-10 sm:px-6 sm:py-14">
-      <section className="mx-auto w-full max-w-2xl rounded-3xl border border-emerald-200 bg-white/92 p-7 text-center shadow-xl shadow-emerald-100/70 sm:p-10">
+    <main className="ui-bg min-h-screen px-4 py-10 sm:px-6 sm:py-14">
+      <section className="ui-glass mx-auto w-full max-w-2xl rounded-3xl p-7 text-center sm:p-10">
         <div className="flex items-center justify-between gap-3">
-          <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold tracking-wide text-emerald-800 uppercase">
+          <p className="ui-surface inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-emerald-900 uppercase">
             {pick(lang, "Step 3 of 3", "3 ലെ ഘട്ടം 3")}
           </p>
           <LanguageSwitcher lang={lang} />
@@ -30,7 +30,7 @@ export default async function ReportIssueConfirmationPage({ searchParams }) {
           {pick(lang, "You can use this ID to track the status of your issue.", "നിങ്ങളുടെ പ്രശ്നത്തിന്റെ നില ട്രാക്ക് ചെയ്യാൻ ഈ ഐഡി ഉപയോഗിക്കാം.")}
         </p>
 
-        <div className="mt-6 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
+        <div className="ui-surface mt-6 rounded-2xl p-4">
           <p className="text-xs font-semibold tracking-wide text-blue-700 uppercase">
             {pick(lang, "Your Track ID", "നിങ്ങളുടെ ട്രാക്ക് ഐഡി")}
           </p>
@@ -40,13 +40,13 @@ export default async function ReportIssueConfirmationPage({ searchParams }) {
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
           <Link
             href="/track-issue"
-            className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-800"
+            className="ui-button-primary inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-white transition"
           >
             {pick(lang, "Track Issue", "പ്രശ്നം ട്രാക്ക് ചെയ്യുക")}
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="ui-glass inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
           >
             {pick(lang, "Back to Home", "ഹോം പേജിലേക്കു മടങ്ങുക")}
           </Link>
