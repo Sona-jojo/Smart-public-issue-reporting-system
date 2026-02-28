@@ -6,22 +6,27 @@ import { useRouter } from "next/navigation";
 import { DepartmentIcon, IssueIcon } from "@/components/report-issue/icons";
 import { buildTrackId, DISTRICT_OPTIONS } from "@/lib/report-issue-data";
 import { pick } from "@/lib/language-utils";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 export function DepartmentSubIssueForm({ department, lang = "en" }) {
   const router = useRouter();
+  const issuesTable =
+    process.env.NEXT_PUBLIC_SUPABASE_ISSUES_TABLE || "issues";
+
   const issueOptions = useMemo(
     () => [
       ...department.issues,
       {
         slug: "other",
-        label: pick(lang, "Other", "മറ്റ്"),
+        label: "Other",
         labelMl: "മറ്റ്",
-        description: pick(lang, "Any issue not listed above.", "മുകളിലെ പട്ടികയിൽ ഇല്ലാത്ത പ്രശ്നം."),
+        description: "Any issue not listed above.",
         descriptionMl: "മുകളിലെ പട്ടികയിൽ ഇല്ലാത്ത പ്രശ്നം.",
       },
     ],
-    [department.issues, lang],
+    [department.issues],
   );
+
   const [selectedIssueSlug, setSelectedIssueSlug] = useState("");
   const [description, setDescription] = useState("");
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -34,12 +39,14 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
   const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState("");
   const [isLocating, setIsLocating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
   const selectedIssue = useMemo(
     () => issueOptions.find((issue) => issue.slug === selectedIssueSlug) ?? null,
     [issueOptions, selectedIssueSlug],
   );
+
   const panchayathOptions = useMemo(
     () => (district ? DISTRICT_OPTIONS[district] ?? [] : []),
     [district],
@@ -61,7 +68,13 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
     setLocationError("");
 
     if (!navigator.geolocation) {
-      setLocationError(pick(lang, "GPS is not supported in this browser.", "ഈ ബ്രൗസറിൽ GPS പിന്തുണയില്ല."));
+      setLocationError(
+        pick(
+          lang,
+          "GPS is not supported in this browser.",
+          "ഈ ബ്രൗസറിൽ GPS പിന്തുണയില്ല.",
+        ),
+      );
       return;
     }
 
@@ -77,7 +90,11 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
       },
       () => {
         setLocationError(
-          pick(lang, "Unable to detect current location. Please allow GPS permission.", "നിലവിലെ സ്ഥാനം കണ്ടെത്താനായില്ല. GPS അനുമതി നൽകുക."),
+          pick(
+            lang,
+            "Unable to detect current location. Please allow GPS permission.",
+            "നിലവിലെ സ്ഥാനം കണ്ടെത്താനായില്ല. GPS അനുമതി നൽകുക.",
+          ),
         );
         setIsLocating(false);
       },
@@ -85,38 +102,111 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
     );
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitError("");
 
     if (!selectedIssueSlug || !description || !district || !panchayath || !priority) {
-      setSubmitError(pick(lang, "Please fill all required fields before submitting.", "സമർപ്പിക്കുന്നതിന് മുമ്പ് ആവശ്യമായ എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കുക."));
+      setSubmitError(
+        pick(
+          lang,
+          "Please fill all required fields before submitting.",
+          "സമർപ്പിക്കുന്നതിന് മുമ്പ് ആവശ്യമായ എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കുക.",
+        ),
+      );
       return;
     }
 
     if (!isAnonymous && !email && !phone) {
       setSubmitError(
-        pick(lang, "Provide at least Email or Mobile Number, or choose anonymous submission.", "കുറഞ്ഞത് ഇമെയിൽ അല്ലെങ്കിൽ മൊബൈൽ നമ്പർ നൽകുക, അല്ലെങ്കിൽ അനാമധേയ സമർപ്പണം തിരഞ്ഞെടുക്കുക."),
+        pick(
+          lang,
+          "Provide at least Email or Mobile Number, or choose anonymous submission.",
+          "കുറഞ്ഞത് ഇമെയിൽ അല്ലെങ്കിൽ മൊബൈൽ നമ്പർ നൽകുക, അല്ലെങ്കിൽ അനാമധേയ സമർപ്പണം തിരഞ്ഞെടുക്കുക.",
+        ),
       );
       return;
     }
 
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setSubmitError(
+        pick(
+          lang,
+          "Supabase config is missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+          "Supabase ക്രമീകരണം ലഭ്യമല്ല. NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY എന്നിവ നൽകുക.",
+        ),
+      );
+      return;
+    }
+
+    const issueLabel =
+      selectedIssue?.[lang === "ml" ? "labelMl" : "label"] ??
+      pick(lang, "Other", "മറ്റ്");
+
     const trackId = buildTrackId();
+    setIsSubmitting(true);
+
+    const locationText = `${district}, ${panchayath}${
+      location?.latitude && location?.longitude
+        ? ` (${location.latitude}, ${location.longitude})`
+        : ""
+    }`;
+
+    let error = null;
+    try {
+      const result = await supabase.from(issuesTable).insert({
+        category: department.name,
+        issue: issueLabel,
+        phone: isAnonymous ? null : phone || null,
+        email: isAnonymous ? null : email || null,
+        location: locationText,
+      });
+      error = result.error;
+    } catch (caught) {
+      error = caught instanceof Error ? caught : new Error(String(caught));
+    }
+
+    if (error) {
+      setIsSubmitting(false);
+      const message =
+        String(error.message || "").includes("Failed to fetch")
+          ? pick(
+              lang,
+              "Failed to reach Supabase (network/DNS/config). Verify NEXT_PUBLIC_SUPABASE_URL and key, then restart `npm run dev`.",
+              "Supabase-ലേക്ക് എത്താനായില്ല (നെറ്റ്‌വർക്ക്/DNS/ക്രമീകരണം). NEXT_PUBLIC_SUPABASE_URL, key പരിശോധിച്ച് `npm run dev` റീസ്റ്റാർട്ട് ചെയ്യുക.",
+            )
+          : pick(
+              lang,
+              `Failed to save complaint in Supabase: ${error.message}`,
+              `Supabase-ൽ പരാതി സേവ് ചെയ്യാനായില്ല: ${error.message}`,
+            );
+      setSubmitError(
+        message,
+      );
+      return;
+    }
+
     const query = new URLSearchParams({
       trackId,
       department: department.slug,
       issue: selectedIssueSlug,
-      issueLabel: selectedIssue?.[lang === "ml" ? "labelMl" : "label"] ?? pick(lang, "Other", "മറ്റ്"),
+      issueLabel,
     }).toString();
 
+    setIsSubmitting(false);
     router.push(`/report-issue/confirmation?${query}`);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/60 to-emerald-50/60 p-4 shadow-sm sm:p-5">
-        <h2 className="text-sm font-semibold text-slate-800">{pick(lang, "Select Sub-Issue", "ഉപപ്രശ്നം തിരഞ്ഞെടുക്കുക")}</h2>
-        <p className="mt-1 text-xs text-slate-600">{pick(lang, "Choose one issue type.", "ഒരു പ്രശ്നതരം തിരഞ്ഞെടുക്കുക.")}</p>
+        <h2 className="text-sm font-semibold text-slate-800">
+          {pick(lang, "Select Sub-Issue", "ഉപപ്രശ്നം തിരഞ്ഞെടുക്കുക")}
+        </h2>
+        <p className="mt-1 text-xs text-slate-600">
+          {pick(lang, "Choose one issue type.", "ഒരു പ്രശ്നതരം തിരഞ്ഞെടുക്കുക.")}
+        </p>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {issueOptions.map((issue) => {
@@ -143,7 +233,8 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
                   {issue[lang === "ml" ? "labelMl" : "label"] ?? issue.label}
                 </p>
                 <p className="mt-1 text-xs text-slate-600">
-                  {issue[lang === "ml" ? "descriptionMl" : "description"] ?? issue.description}
+                  {issue[lang === "ml" ? "descriptionMl" : "description"] ??
+                    issue.description}
                 </p>
               </button>
             );
@@ -165,9 +256,13 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
               ? pick(
                   lang,
                   `Describe ${(selectedIssue.label ?? "").toLowerCase()} with exact location and timeline.`,
-                  `സ്ഥലംയും സമയവും ചേർത്ത് ${(selectedIssue.labelMl ?? selectedIssue.label ?? "").toLowerCase()} വിശദമായി രേഖപ്പെടുത്തുക.`,
+                  `സ്ഥലവും സമയവും ചേർത്ത് ${(selectedIssue.labelMl ?? selectedIssue.label ?? "").toLowerCase()} വിശദമായി രേഖപ്പെടുത്തുക.`,
                 )
-              : pick(lang, "Select a sub-issue above, then describe the complaint in detail.", "മുകളിലെ ഉപപ്രശ്നം തിരഞ്ഞെടുക്കി പരാതി വിശദമായി എഴുതുക.")
+              : pick(
+                  lang,
+                  "Select a sub-issue above, then describe the complaint in detail.",
+                  "മുകളിലെ ഉപപ്രശ്നം തിരഞ്ഞെടുക്കി പരാതി വിശദമായി എഴുതുക.",
+                )
           }
           className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-600"
           required
@@ -203,18 +298,23 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
-        <h2 className="text-sm font-semibold text-slate-800">{pick(lang, "Location", "സ്ഥലം")}</h2>
+        <h2 className="text-sm font-semibold text-slate-800">
+          {pick(lang, "Location", "സ്ഥലം")}
+        </h2>
         <button
           type="button"
           onClick={detectLocation}
           className="mt-2 rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
         >
-          {isLocating ? pick(lang, "Detecting...", "കണ്ടെത്തുന്നു...") : pick(lang, "Auto-detect GPS Location", "GPS സ്ഥാനം സ്വയം കണ്ടെത്തുക")}
+          {isLocating
+            ? pick(lang, "Detecting...", "കണ്ടെത്തുന്നു...")
+            : pick(lang, "Auto-detect GPS Location", "GPS സ്ഥാനം സ്വയം കണ്ടെത്തുക")}
         </button>
 
         {location ? (
           <p className="mt-2 text-sm text-emerald-700">
-            Detected: {location.latitude}, {location.longitude}
+            {pick(lang, "Detected", "കണ്ടെത്തിയത്")}: {location.latitude},{" "}
+            {location.longitude}
           </p>
         ) : null}
 
@@ -272,7 +372,9 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
-        <h2 className="text-sm font-semibold text-slate-800">{pick(lang, "Priority", "പ്രാധാന്യം")}</h2>
+        <h2 className="text-sm font-semibold text-slate-800">
+          {pick(lang, "Priority", "പ്രാധാന്യം")}
+        </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <label className="cursor-pointer rounded-xl border border-emerald-300 bg-emerald-50 p-3">
             <input
@@ -283,7 +385,9 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
               onChange={() => setPriority("LOW")}
               className="mr-2"
             />
-            <span className="font-semibold text-emerald-800">{pick(lang, "Low", "കുറവ്")}</span>
+            <span className="font-semibold text-emerald-800">
+              {pick(lang, "Low", "കുറവ്")}
+            </span>
           </label>
           <label className="cursor-pointer rounded-xl border border-amber-300 bg-amber-50 p-3">
             <input
@@ -294,7 +398,9 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
               onChange={() => setPriority("HIGH")}
               className="mr-2"
             />
-            <span className="font-semibold text-amber-800">{pick(lang, "High", "ഉയർന്ന")}</span>
+            <span className="font-semibold text-amber-800">
+              {pick(lang, "High", "ഉയർന്ന")}
+            </span>
           </label>
           <label className="cursor-pointer rounded-xl border border-red-300 bg-red-50 p-3">
             <input
@@ -305,13 +411,17 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
               onChange={() => setPriority("URGENT")}
               className="mr-2"
             />
-            <span className="font-semibold text-red-800">{pick(lang, "Urgent", "അത്യാവശ്യം")}</span>
+            <span className="font-semibold text-red-800">
+              {pick(lang, "Urgent", "അത്യാവശ്യം")}
+            </span>
           </label>
         </div>
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
-        <h2 className="text-sm font-semibold text-slate-800">{pick(lang, "Citizen Info (Optional)", "പൗര വിവരങ്ങൾ (ഐച്ഛികം)")}</h2>
+        <h2 className="text-sm font-semibold text-slate-800">
+          {pick(lang, "Citizen Info (Optional)", "പൗര വിവരങ്ങൾ (ഐച്ഛികം)")}
+        </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <input
             type="tel"
@@ -348,9 +458,12 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
 
       <button
         type="submit"
-        className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-700 via-cyan-600 to-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-200 transition hover:from-blue-800 hover:via-cyan-700 hover:to-emerald-700 sm:w-auto"
+        disabled={isSubmitting}
+        className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-700 via-cyan-600 to-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-200 transition hover:from-blue-800 hover:via-cyan-700 hover:to-emerald-700 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
-        {pick(lang, "Submit Complaint", "പരാതി സമർപ്പിക്കുക")}
+        {isSubmitting
+          ? pick(lang, "Submitting...", "സമർപ്പിക്കുന്നു...")
+          : pick(lang, "Submit Complaint", "പരാതി സമർപ്പിക്കുക")}
       </button>
     </form>
   );
