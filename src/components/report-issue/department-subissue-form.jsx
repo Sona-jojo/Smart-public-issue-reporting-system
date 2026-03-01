@@ -7,11 +7,14 @@ import { DepartmentIcon, IssueIcon } from "@/components/report-issue/icons";
 import { buildTrackId, DISTRICT_OPTIONS } from "@/lib/report-issue-data";
 import { pick } from "@/lib/language-utils";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { uploadIssueAttachment } from "@/lib/supabase/storage";
 
 export function DepartmentSubIssueForm({ department, lang = "en" }) {
   const router = useRouter();
   const issuesTable =
     process.env.NEXT_PUBLIC_SUPABASE_ISSUES_TABLE || "issues";
+  const attachmentsTable =
+    process.env.NEXT_PUBLIC_SUPABASE_ATTACHMENTS_TABLE || "issue_attachments";
 
   const issueOptions = useMemo(
     () => [
@@ -29,6 +32,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
 
   const [selectedIssueSlug, setSelectedIssueSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [district, setDistrict] = useState("");
   const [panchayath, setPanchayath] = useState("");
@@ -61,6 +65,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
   const handleImageChange = (event) => {
     const fileList = Array.from(event.target.files ?? []);
     const selected = fileList.slice(0, 3);
+    setImageFiles(selected);
     setImagePreviews(selected.map((file) => URL.createObjectURL(file)));
   };
 
@@ -170,8 +175,8 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
     const fallbackRecord = {
       track_id: trackId,
       category: department.name,
+      issue: issueLabel,
       sub_issue: issueLabel,
-      subcategory: issueLabel,
       description,
       priority,
       district: district || null,
@@ -200,6 +205,7 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         trackid: trackId,
         track_id: trackId,
         category: department.name,
+        issue: issueLabel,
         sub_issue: issueLabel,
         description,
         priority,
@@ -223,6 +229,29 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
       for (let attempt = 0; attempt < 12; attempt += 1) {
         const result = await supabase.from(issuesTable).insert(workingPayload);
         if (!result.error) {
+          // Best-effort follow-up update to ensure sub-issue fields are persisted.
+          // Useful when schema variants or insert filtering cause partial writes.
+          const subIssuePatch = {
+            issue: issueLabel,
+            sub_issue: issueLabel,
+          };
+          try {
+            await supabase
+              .from(issuesTable)
+              .update(subIssuePatch)
+              .eq("track_id", trackId);
+          } catch {
+            // Ignore; we try alternate key below.
+          }
+          try {
+            await supabase
+              .from(issuesTable)
+              .update(subIssuePatch)
+              .eq("trackid", trackId);
+          } catch {
+            // Ignore follow-up update errors.
+          }
+
           error = null;
           break;
         }
@@ -259,6 +288,57 @@ export function DepartmentSubIssueForm({ department, lang = "en" }) {
         message,
       );
       return;
+    }
+
+    if (imageFiles.length) {
+      let issueId = null;
+      try {
+        const { data: issueRows } = await supabase
+          .from(issuesTable)
+          .select("id, track_id")
+          .ilike("track_id", trackId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        issueId = issueRows?.[0]?.id ?? null;
+      } catch {
+        issueId = null;
+      }
+
+      for (const file of imageFiles) {
+        const uploaded = await uploadIssueAttachment({
+          file,
+          trackId,
+          uploaderType: "citizen",
+        });
+        if (uploaded.error || !uploaded.url) {
+          continue;
+        }
+
+        const attachmentPayload = {
+          issue_id: issueId,
+          track_id: trackId,
+          file_url: uploaded.url,
+          storage_path: uploaded.path,
+          uploaded_by: "citizen",
+          note: "Citizen evidence",
+          created_at: nowIso,
+        };
+
+        let workingAttachmentPayload = { ...attachmentPayload };
+        for (let attempt = 0; attempt < 12; attempt += 1) {
+          const attachResult = await supabase
+            .from(attachmentsTable)
+            .insert(workingAttachmentPayload);
+          if (!attachResult.error) break;
+          const missingColumn = String(attachResult.error.message || "")
+            .match(/Could not find the '([^']+)' column/i)?.[1];
+          if (missingColumn && missingColumn in workingAttachmentPayload) {
+            delete workingAttachmentPayload[missingColumn];
+            continue;
+          }
+          break;
+        }
+      }
     }
 
     const query = new URLSearchParams({

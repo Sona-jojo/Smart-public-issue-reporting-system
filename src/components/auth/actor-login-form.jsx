@@ -2,23 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { pick } from "@/lib/language-utils";
+import { OfficialWorkflowForm } from "@/components/auth/official-workflow-form";
 
 const ROLES = [
-  {
-    value: "admin",
-    labelEn: "Admin",
-    labelMl: "അഡ്മിൻ",
-  },
-  {
-    value: "secretary",
-    labelEn: "Panchayath Secretary",
-    labelMl: "പഞ്ചായത്ത് സെക്രട്ടറി",
-  },
-  {
-    value: "engineer",
-    labelEn: "Section Clerk / Engineer",
-    labelMl: "സെക്ഷൻ ക്ലർക്ക് / എഞ്ചിനീയർ",
-  },
+  { value: "admin", labelEn: "Admin", labelMl: "Admin" },
+  { value: "secretary", labelEn: "Panchayath Secretary", labelMl: "Panchayath Secretary" },
+  { value: "engineer", labelEn: "Section Clerk / Engineer", labelMl: "Section Clerk / Engineer" },
 ];
 
 export function ActorLoginForm({ lang = "en" }) {
@@ -28,6 +17,7 @@ export function ActorLoginForm({ lang = "en" }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [sessionUser, setSessionUser] = useState(null);
 
   const activeRole = useMemo(
     () =>
@@ -41,9 +31,10 @@ export function ActorLoginForm({ lang = "en" }) {
     event.preventDefault();
     setError("");
     setSuccess("");
+    setSessionUser(null);
 
     if (!email || !password) {
-      setError(pick(lang, "Email and password are required.", "ഇമെയിലും പാസ്‌വേർഡും ആവശ്യമാണ്."));
+      setError(pick(lang, "Email and password are required.", "Email and password are required."));
       return;
     }
 
@@ -63,7 +54,7 @@ export function ActorLoginForm({ lang = "en" }) {
             pick(
               lang,
               "Unable to login with provided credentials.",
-              "നൽകിയ ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് ലോഗിൻ ചെയ്യാനായില്ല.",
+              "Unable to login with provided credentials.",
             ),
         );
         return;
@@ -75,92 +66,95 @@ export function ActorLoginForm({ lang = "en" }) {
           12,
         )}...`,
       );
+      setSessionUser(result.data);
     } catch {
-      setError(pick(lang, "Server error while logging in. Please retry.", "ലോഗിൻ സമയത്ത് സർവർ പിഴവ്. വീണ്ടും ശ്രമിക്കുക."));
+      setError(pick(lang, "Server error while logging in. Please retry.", "Server error while logging in. Please retry."));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <form className="space-y-5" onSubmit={submit}>
-      <fieldset className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {ROLES.map((option) => {
-          const isActive = role === option.value;
-          return (
-            <label
-              key={option.value}
-              className={`cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition ${
-                isActive
-                  ? "ui-button-primary border-transparent text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:border-teal-600 hover:bg-teal-50"
-              }`}
-            >
-              <input
-                type="radio"
-                name="role"
-                className="sr-only"
-                checked={isActive}
-                onChange={() => setRole(option.value)}
-              />
-              {pick(lang, option.labelEn, option.labelMl)}
-            </label>
-          );
-        })}
-      </fieldset>
+    <>
+      <form className="space-y-5" onSubmit={submit}>
+        <fieldset className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {ROLES.map((option) => {
+            const isActive = role === option.value;
+            return (
+              <label
+                key={option.value}
+                className={`cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition ${
+                  isActive
+                    ? "ui-button-primary border-transparent text-white"
+                    : "border-slate-300 bg-white text-slate-700 hover:border-teal-600 hover:bg-teal-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="role"
+                  className="sr-only"
+                  checked={isActive}
+                  onChange={() => setRole(option.value)}
+                />
+                {pick(lang, option.labelEn, option.labelMl)}
+              </label>
+            );
+          })}
+        </fieldset>
 
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-slate-700" htmlFor="email">
-          {pick(lang, "Email", "ഇമെയിൽ")}
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder={pick(lang, "official@panchayath.gov", "official@panchayath.gov")}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-          autoComplete="email"
-        />
-      </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-slate-700" htmlFor="email">
+            {pick(lang, "Email", "Email")}
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="official@panchayath.gov"
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            autoComplete="email"
+          />
+        </div>
 
-      <div className="space-y-1.5">
-        <label
-          className="text-sm font-medium text-slate-700"
-          htmlFor="password"
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-slate-700" htmlFor="password">
+            {pick(lang, "Password", "Password")}
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder={pick(lang, "Enter password", "Enter password")}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            autoComplete="current-password"
+          />
+        </div>
+
+        {error ? (
+          <p className="ui-surface rounded-lg px-3 py-2 text-sm text-red-700">{error}</p>
+        ) : null}
+
+        {success ? (
+          <p className="ui-surface rounded-lg px-3 py-2 text-sm text-emerald-700">{success}</p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="ui-button-primary w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {pick(lang, "Password", "പാസ്‌വേഡ്")}
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder={pick(lang, "Enter password", "പാസ്‌വേഡ് നൽകുക")}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-          autoComplete="current-password"
+          {isLoading ? pick(lang, "Signing in...", "Signing in...") : pick(lang, "Sign In", "Sign In")}
+        </button>
+      </form>
+
+      {sessionUser ? (
+        <OfficialWorkflowForm
+          lang={lang}
+          operatorName={sessionUser.name || activeRole || "Official"}
         />
-      </div>
-
-      {error ? (
-        <p className="ui-surface rounded-lg px-3 py-2 text-sm text-red-700">
-          {error}
-        </p>
       ) : null}
-
-      {success ? (
-        <p className="ui-surface rounded-lg px-3 py-2 text-sm text-emerald-700">
-          {success}
-        </p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="ui-button-primary w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:from-slate-500 disabled:to-slate-500"
-      >
-        {isLoading ? pick(lang, "Signing in...", "ലോഗിൻ ചെയ്യുന്നു...") : pick(lang, "Sign In", "സൈൻ ഇൻ")}
-      </button>
-    </form>
+    </>
   );
 }

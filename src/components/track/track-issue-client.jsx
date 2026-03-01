@@ -4,9 +4,18 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { pick } from "@/lib/language-utils";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { getSupabaseClient } from "@/lib/supabase/client";
+
+function normalizeStatus(status) {
+  return String(status || "")
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function statusTone(status) {
-  const s = (status || "").toLowerCase();
+  const s = normalizeStatus(status);
   if (s === "resolved") return "bg-emerald-100 text-emerald-800 border-emerald-200";
   if (s === "overdue") return "bg-red-100 text-red-800 border-red-200";
   if (s === "reopened") return "bg-violet-100 text-violet-800 border-violet-200";
@@ -48,7 +57,7 @@ function defaultTimeline(record) {
       comments: "Issue assigned to the corresponding section clerk.",
     },
   ];
-  const status = (record?.status || "Pending").toLowerCase();
+  const status = normalizeStatus(record?.status || "Pending");
   if (status === "in progress" || status === "resolved" || status === "overdue") {
     base.push({
       title: "In Progress",
@@ -72,6 +81,63 @@ function toDisplayRecord(raw, id) {
   if (!raw) return null;
   const created = raw.reported_at || raw.created_at || new Date().toISOString();
   const status = raw.status || "Pending";
+  const attachments = Array.isArray(raw.attachments)
+    ? raw.attachments
+        .map((item) => ({
+          id: item.id || `${item.track_id || id}-${item.file_url || Math.random()}`,
+          fileUrl: item.file_url || item.url || null,
+          uploadedBy: item.uploaded_by || "official",
+          note: item.note || "",
+          at: item.created_at || item.at || created,
+        }))
+        .filter((item) => item.fileUrl)
+    : [];
+  const workflowHistory = Array.isArray(raw.workflow_history)
+    ? raw.workflow_history.map((item) => ({
+        title: item.title || "Status Updated",
+        at: item.at || created,
+        by: item.by || "Official",
+        comments: item.comments || "",
+      }))
+    : Array.isArray(raw.timeline)
+      ? raw.timeline.map((item) => ({
+          title: item.title || "Status Updated",
+          at: item.at || created,
+          by: item.by || "Official",
+          comments: item.comments || "",
+        }))
+    : [];
+  const notesText =
+    typeof raw.notes === "string"
+      ? raw.notes.trim()
+      : typeof raw.note === "string"
+        ? raw.note.trim()
+        : "";
+  const progressFromField = Array.isArray(raw.progress_notes)
+    ? raw.progress_notes.map((item) => ({
+        comment: item.comment || item.notes || "Progress updated.",
+        at: item.at || raw.updated_at || created,
+        proofImage: item.proofImage || null,
+      }))
+    : [];
+  const progressFromAttachments = attachments.map((item) => ({
+    comment: item.note || `Attachment uploaded by ${item.uploadedBy}.`,
+    at: item.at,
+    proofImage: item.fileUrl,
+  }));
+  const progressFromNotes = notesText
+    ? notesText
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .slice(-8)
+        .map((line) => ({
+          comment: line,
+          at: raw.updated_at || created,
+          proofImage: null,
+        }))
+    : [];
+
   return {
     trackId: raw.track_id || id,
     category: raw.category || raw.department_name || "General",
@@ -82,24 +148,40 @@ function toDisplayRecord(raw, id) {
     reportedAt: created,
     submittedBy: raw.is_anonymous ? "Anonymous" : raw.submitted_by || raw.name || "Citizen",
     assignedSection: raw.assigned_section || raw.category || "Not assigned",
-    assignedOfficer: raw.assigned_officer || "Not assigned",
+    assignedOfficer:
+      raw.assigned_officer || raw.assigned_clerk || raw.assigned_to || "Not assigned",
     resolutionDeadline:
       raw.resolution_deadline ||
       new Date(new Date(created).getTime() + 72 * 60 * 60 * 1000).toISOString(),
     escalationCount: Number(raw.escalation_count || 0),
     status,
-    timeline: raw.timeline || defaultTimeline(raw),
+    timeline: (
+      workflowHistory.length ? workflowHistory : raw.timeline || defaultTimeline(raw)
+    )
+      .concat(
+        attachments.map((item) => ({
+          title: "Attachment Uploaded",
+          at: item.at,
+          by: item.uploadedBy,
+          comments: item.note || "Proof image uploaded.",
+          proofImage: item.fileUrl,
+        })),
+      )
+      .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime()),
     progressNotes:
-      raw.progress_notes || [
-        {
-          comment: "Initial verification completed by field team.",
-          at: new Date(new Date(created).getTime() + 24 * 60 * 60 * 1000).toISOString(),
-          proofImage: null,
-        },
-      ],
+      progressFromField.length || progressFromNotes.length || progressFromAttachments.length
+        ? [...progressFromField, ...progressFromNotes, ...progressFromAttachments]
+            .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime())
+        : [
+            {
+              comment: "Initial verification completed by field team.",
+              at: new Date(new Date(created).getTime() + 24 * 60 * 60 * 1000).toISOString(),
+              proofImage: null,
+            },
+          ],
     duplicateCount: Number(raw.duplicate_count || 0),
     resolution:
-      (status || "").toLowerCase() === "resolved"
+      normalizeStatus(status) === "resolved"
         ? {
             summary: raw.resolution_summary || "Issue resolved and site restored.",
             finalReport: raw.final_report || "Work completed as per departmental standards.",
@@ -120,10 +202,25 @@ function toDisplayRecord(raw, id) {
 
 function buildTrackingStages(record) {
   if (!record) return [];
-  const status = (record.status || "").toLowerCase();
-  const resolved = status === "resolved";
-  const inProgress = status === "in progress" || resolved || status === "overdue";
-  const assigned = status !== "pending";
+  const status = normalizeStatus(record.status || "");
+  const titles = (record.timeline || []).map((item) =>
+    String(item.title || "").toLowerCase(),
+  );
+  const hasAssignedEvent = titles.some((t) => t.includes("assign"));
+  const hasProgressEvent = titles.some(
+    (t) => t.includes("progress") || t.includes("work"),
+  );
+  const hasResolvedEvent = titles.some(
+    (t) => t.includes("complete") || t.includes("resolved"),
+  );
+
+  const resolved = status === "resolved" || hasResolvedEvent;
+  const inProgress =
+    status === "in progress" ||
+    status === "overdue" ||
+    hasProgressEvent ||
+    resolved;
+  const assigned = status !== "pending" || hasAssignedEvent || inProgress || resolved;
 
   const assignedAt = record.timeline?.find((item) =>
     String(item.title || "").toLowerCase().includes("assigned"),
@@ -200,6 +297,9 @@ function downloadResolutionReport(record) {
 }
 
 export function TrackIssueClient({ lang }) {
+  const issuesTable = process.env.NEXT_PUBLIC_SUPABASE_ISSUES_TABLE || "issues";
+  const attachmentsTable =
+    process.env.NEXT_PUBLIC_SUPABASE_ATTACHMENTS_TABLE || "issue_attachments";
   const [trackId, setTrackId] = useState("");
   const [record, setRecord] = useState(null);
   const [error, setError] = useState("");
@@ -214,13 +314,90 @@ export function TrackIssueClient({ lang }) {
   );
   const trackingStages = useMemo(() => buildTrackingStages(record), [record]);
 
-  const search = (event) => {
+  const search = async (event) => {
     event.preventDefault();
     setError("");
     setFeedbackSaved(false);
 
-    const id = trackId.trim();
+    const id = trackId.trim().toUpperCase();
     if (!id) return;
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        let data = null;
+        let readError = null;
+
+        const primary = await supabase
+          .from(issuesTable)
+          .select("*")
+          .ilike("track_id", id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        data = primary.data;
+        readError = primary.error;
+
+        // Compatibility fallback if rows were stored with `trackid` instead of `track_id`.
+        if (!readError && (!data || !data.length)) {
+          const secondary = await supabase
+            .from(issuesTable)
+            .select("*")
+            .ilike("trackid", id)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          if (!secondary.error && secondary.data?.length) {
+            data = secondary.data;
+          }
+        }
+
+        if (readError) {
+          throw readError;
+        }
+
+        if (data?.length) {
+          let attachments = [];
+          try {
+            const trackRef = data[0]?.track_id || data[0]?.trackid || id;
+            const byTrack = await supabase
+              .from(attachmentsTable)
+              .select("*")
+              .ilike("track_id", trackRef)
+              .order("created_at", { ascending: true });
+            if (!byTrack.error && byTrack.data?.length) {
+              attachments = byTrack.data;
+            }
+
+            if (!attachments.length && data[0]?.id) {
+              const byIssueId = await supabase
+                .from(attachmentsTable)
+                .select("*")
+                .eq("issue_id", data[0].id)
+                .order("created_at", { ascending: true });
+              if (!byIssueId.error && byIssueId.data?.length) {
+                attachments = byIssueId.data;
+              }
+            }
+          } catch {
+            attachments = [];
+          }
+          setRecord(toDisplayRecord({ ...data[0], attachments }, id));
+          return;
+        }
+
+        // Supabase is reachable but row not found; do not silently use stale local cache.
+        setRecord(null);
+        setError(
+          pick(
+            lang,
+            "Track ID not found in Supabase records.",
+            "Supabase രേഖകളിൽ Track ID കണ്ടെത്താനായില്ല.",
+          ),
+        );
+        return;
+      } catch {
+        // Fallback to local storage only for network/runtime errors.
+      }
+    }
 
     try {
       const raw = localStorage.getItem("spirs_reports");
@@ -399,6 +576,16 @@ export function TrackIssueClient({ lang }) {
                     {item.comments ? (
                       <p className="mt-1 text-sm text-slate-700">{item.comments}</p>
                     ) : null}
+                    {item.proofImage ? (
+                      <a href={item.proofImage} target="_blank" rel="noreferrer" className="mt-2 block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={item.proofImage}
+                          alt="Timeline proof"
+                          className="h-20 w-32 rounded-lg border border-slate-200 object-cover sm:h-24 sm:w-40"
+                        />
+                      </a>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -412,9 +599,14 @@ export function TrackIssueClient({ lang }) {
                     <p className="text-sm text-slate-800">{item.comment}</p>
                     <p className="mt-1 text-xs text-slate-500">{formatDateTime(item.at)}</p>
                     {item.proofImage ? (
-                      <p className="mt-2 text-xs text-blue-700">
-                        {pick(lang, "Proof image uploaded.", "പ്രമാണ ചിത്രം അപ്‌ലോഡ് ചെയ്തിരിക്കുന്നു.")}
-                      </p>
+                      <a href={item.proofImage} target="_blank" rel="noreferrer" className="mt-2 block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={item.proofImage}
+                          alt="Progress proof"
+                          className="h-20 w-32 rounded-lg border border-slate-200 object-cover sm:h-24 sm:w-40"
+                        />
+                      </a>
                     ) : null}
                   </div>
                 ))}
